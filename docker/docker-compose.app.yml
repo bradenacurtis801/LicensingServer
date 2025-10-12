@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # License Management API
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: licensing-api
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - DOCKER_ENV=true
+      - DEBUG=${DEBUG}
+      - SECRET_KEY=${SECRET_KEY}
+      - RSA_SECRET=${RSA_SECRET}
+      - APP_NAME=${APP_NAME}
+      - APP_VERSION=${APP_VERSION}
+      - BACKEND_PORT=${BACKEND_PORT}
+      - LICENSE_KEY_LENGTH=${LICENSE_KEY_LENGTH}
+      - MAX_ACTIVATIONS_DEFAULT=${MAX_ACTIVATIONS_DEFAULT}
+      - API_V1_PREFIX=${API_V1_PREFIX}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - RATE_LIMIT_REQUESTS=${RATE_LIMIT_REQUESTS}
+      - RATE_LIMIT_WINDOW=${RATE_LIMIT_WINDOW}
+    volumes:
+      - app_logs:/var/log/licensing-server
+      - app_data:/var/lib/licensing-server/data
+      - app_cache:/var/cache/licensing-server
+    ports:
+      - "${BACKEND_PORT}:8000"
+    networks:
+      - app-network
+    restart: unless-stopped
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: licensing-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # Nginx reverse proxy (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: licensing-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - api
+    networks:
+      - app-network
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+    driver: local
+  app_logs:
+    driver: local
+  app_data:
+    driver: local
+  app_cache:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
