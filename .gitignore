@@ -1,0 +1,148 @@
+# Git ignore for LicensingServer Python project
+# -------------------------------
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+*.egg
+pip-wheel-metadata/
+share/python-wheels/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+,coverage
+htmlcov/
+.pytest_cache/
+
+# Sphinx documentation
+docs/_build/
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow
+__pypackages__/
+
+# Private keys and certificates
+*.pem
+
+# Environments
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+env/
+venv/
+ENV/
+env.bak/
+.venv/
+
+# mkdocs documentation
+site/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# IDEs and editors
+.vscode/
+.idea/
+/.idea/
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+*.swp
+*.swo
+*.swn
+
+# OS files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Logs and temp files
+*.log
+logs/
+tmp/
+temp/
+
+# Database files
+*.db
+*.sqlite3
+
+# Client SDK caches
+client_sdk/__pycache__/
+
+# Database migration files (development-specific)
+migrations/versions/*.py
+!migrations/versions/__init__.py
+
+# Docker
+/docker-compose*.yml
+Dockerfile
+
+# Misc
+*.bak
+*.orig
+*.rej
+
+# Frontend (Next.js/React/Node.js)
+# -------------------------------
+frontend/node_modules/
+frontend/.next/
+
+# Frontend dependencies
+frontend/package-lock.json
+frontend/yarn.lock
+frontend/pnpm-lock.yaml
+
+# Frontend generated files
+frontend/generated/
+frontend/src/generated/
+frontend/.openapi-generator/
+frontend/openapitools.json
+
+# Frontend IDE
+frontend/.vscode/
+frontend/.idea/
+
+# End of .gitignore
+

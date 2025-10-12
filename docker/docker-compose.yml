@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: licensing-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB_NAME}
+      POSTGRES_USER: ${POSTGRES_USERNAME}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    networks:
+      - licensing-network
+    restart: unless-stopped
+
+  # License Management API
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: licensing-api
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USERNAME}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB_NAME}
+      - DOCKER_ENV=true
+      - DEBUG=${DEBUG}
+      - APP_NAME=${APP_NAME}
+      - APP_VERSION=${APP_VERSION}
+      - BACKEND_PORT=${BACKEND_PORT}
+      - LICENSE_KEY_LENGTH=${LICENSE_KEY_LENGTH}
+      - API_V1_PREFIX=${API_V1_PREFIX}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      # RSA private key is mounted from the host — generate with:
+      #   openssl genrsa -out private.pem 2048
+      - RSA_PRIVATE_KEY_PATH=/secrets/private.pem
+    volumes:
+      - app_logs:/var/log/licensing-server
+      - app_data:/var/lib/licensing-server/data
+      - app_cache:/var/cache/licensing-server
+      - ../private.pem:/secrets/private.pem:ro
+    ports:
+      - "${BACKEND_PORT}:8000"
+    depends_on:
+      - postgres
+    networks:
+      - licensing-network
+    restart: unless-stopped
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+volumes:
+  postgres_data:
+    driver: local
+  app_logs:
+    driver: local
+  app_data:
+    driver: local
+  app_cache:
+    driver: local
+
+networks:
+  licensing-network:
+    driver: bridge
