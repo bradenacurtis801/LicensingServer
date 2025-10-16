@@ -1,11 +1,11 @@
 """
 License endpoints for managing license keys
 """
-from typing import List
+from typing import List, Union
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.services.license_service import LicenseService
-from app.models.schemas import LicenseKeyCreate, LicenseKeyResponse, LicenseKeyUpdate
+from app.models.schemas import LicenseKeyCreate, LicenseKeyResponse, LicenseKeyUpdate, LicenseKeyWithRelationsResponse
 from app.models.database import User
 from app.dependencies import (
     get_license_service, require_license_read, require_license_write, 
@@ -25,15 +25,18 @@ def create_license(
     return service.create_license(license_data, current_user)
 
 
-@router.get("/", response_model=List[LicenseKeyResponse])
+@router.get("/", response_model=List[Union[LicenseKeyResponse, LicenseKeyWithRelationsResponse]])
 def list_licenses(
     skip: int = 0,
     limit: int = 100,
+    include_relations: bool = False,
     current_user: User = Depends(require_license_read()),
     service: LicenseService = Depends(get_license_service)
-) -> List[LicenseKeyResponse]:
+) -> List[Union[LicenseKeyResponse, LicenseKeyWithRelationsResponse]]:
     """List all licenses for the authenticated user"""
-    return service.list_licenses(current_user, skip=skip, limit=limit)
+    return service.list_licenses(current_user, skip=skip, limit=limit, include_relations=include_relations)
+
+
 
 
 @router.get("/{license_id}", response_model=LicenseKeyResponse)

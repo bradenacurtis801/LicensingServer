@@ -3,10 +3,10 @@ License service for managing license keys
 """
 import json
 from datetime import datetime, timezone
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Union, Dict, Any
 from sqlmodel import Session, select
 from app.models.database import LicenseKey, Customer, Application, User
-from app.models.schemas import LicenseKeyCreate, LicenseKeyResponse, LicenseKeyUpdate, LicenseKeyGenerator
+from app.models.schemas import LicenseKeyCreate, LicenseKeyResponse, LicenseKeyUpdate, LicenseKeyGenerator, LicenseKeyWithRelationsResponse
 from app.core.exceptions import CustomerNotFoundException, ApplicationNotFoundException, LicenseNotFoundException
 
 
@@ -90,17 +90,67 @@ class LicenseService:
         
         return self._to_response(db_license)
     
-    def list_licenses(self, user: User, skip: int = 0, limit: int = 100) -> List[LicenseKeyResponse]:
+    def list_licenses(self, user: User, skip: int = 0, limit: int = 100, include_relations: bool = False) -> List[Union[LicenseKeyResponse, LicenseKeyWithRelationsResponse]]:
         """List all licenses for a user"""
-        licenses = self.db.exec(
-            select(LicenseKey)
-            .join(Customer)
-            .where(Customer.user_id == user.id)
-            .offset(skip)
-            .limit(limit)
-        ).all()
-        
-        return [self._to_response(license) for license in licenses]
+        if include_relations:
+            from app.models.schemas import CustomerResponse, ApplicationResponse
+            
+            # Eager load the related data
+            licenses = self.db.exec(
+                select(LicenseKey, Customer, Application)
+                .join(Customer, LicenseKey.customer_id == Customer.id)
+                .join(Application, LicenseKey.application_id == Application.id)
+                .where(Customer.user_id == user.id)
+                .offset(skip)
+                .limit(limit)
+            ).all()
+            
+            result = []
+            for license_key, customer, application in licenses:
+                # Convert to response format
+                license_data = self._to_response(license_key).dict()
+                
+                # Add related data
+                license_data['customer'] = CustomerResponse(
+                    id=customer.id,
+                    name=customer.name,
+                    email=customer.email,
+                    company=customer.company,
+                    created_at=customer.created_at
+                )
+                
+                # Parse features JSON string to dict if it exists
+                features = None
+                if application.features:
+                    try:
+                        import json
+                        features = json.loads(application.features)
+                    except (json.JSONDecodeError, TypeError):
+                        features = None
+                
+                license_data['application'] = ApplicationResponse(
+                    id=application.id,
+                    name=application.name,
+                    version=application.version,
+                    description=application.description,
+                    features=features,
+                    created_at=application.created_at
+                )
+                
+                result.append(LicenseKeyWithRelationsResponse(**license_data))
+            
+            return result
+        else:
+            licenses = self.db.exec(
+                select(LicenseKey)
+                .join(Customer)
+                .where(Customer.user_id == user.id)
+                .offset(skip)
+                .limit(limit)
+            ).all()
+            
+            return [self._to_response(license) for license in licenses]
+    
     
     def update_license(self, license_id: int, license_update: LicenseKeyUpdate, user: User) -> LicenseKeyResponse:
         """Update a license (with ownership check)"""

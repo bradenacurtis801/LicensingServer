@@ -79,6 +79,34 @@ A modern, FastAPI-based license management system with a clean Python client SDK
 
 The API will be available at `http://localhost:8999`
 
+## 🖼️ Demo Screenshots
+
+Here's what the system looks like in action:
+
+### 🔐 Login Page
+![Login Page](demo/LoginPage.png)
+*Secure authentication with JWT tokens*
+
+### 📊 Dashboard
+![Dashboard](demo/DashboardPage.png)
+*Overview of licenses, customers, and applications with live statistics*
+
+### 🔑 License Management
+![License Page](demo/LicensePage.png)
+*Create, view, edit, and manage license keys with detailed information*
+
+### 👥 Customer Management
+![Customer Page](demo/CustomerPage.png)
+*Manage customer information and track their license usage*
+
+### 🏢 Application Management
+![Application Page](demo/ApplicationPage.png)
+*Register and manage applications that require licensing*
+
+### 🔧 API Token Management
+![API Token Page](demo/APITokenPage.png)
+*Generate and manage API tokens for programmatic access*
+
 ### Docker Setup
 
 ```bash
@@ -230,32 +258,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [SQLModel](https://sqlmodel.tiangolo.com/) - SQL databases in Python
 - [PostgreSQL](https://www.postgresql.org/) - Powerful open source database
 - [Alembic](https://alembic.sqlalchemy.org/) - Database migration tool
-- [Cryptolens Python SDK](https://github.com/Cryptolens/cryptolens-python) - Client SDK foundation (adapted and cleaned)
-
-### Client SDK Attribution
-
-The client SDK in this project is based on the [Cryptolens Python SDK](https://github.com/Cryptolens/cryptolens-python) by Cryptolens AB, but has been significantly adapted and cleaned for this specific license server implementation:
-
-- **Removed unused classes** (AI, Message, Product, Customer, Data, PaymentForm, Subscription, User)
-- **Adapted to our API** endpoints and data structures
-- **Removed f1-f8 fields** in favor of JSON-based features
-- **Renamed classes** to use our own naming conventions
-- **Optimized for our use case** (60% smaller codebase)
-- **Added our own helpers** and utilities
-
-The original Cryptolens SDK is licensed under the MIT License, and we maintain proper attribution as required.
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/bradenacurtis801/LicensingServer/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/bradenacurtis801/LicensingServer/discussions)
+- [Next.js](https://nextjs.org/) - React framework for production
+- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
 
 ## 🗺️ Roadmap
 
-- [ ] REST API client SDKs for other languages
-- [ ] Web-based admin dashboard
+- [x] Web-based admin dashboard
 - [ ] Advanced analytics and reporting
-- [ ] Multi-currency support
 - [ ] Webhook support for real-time notifications
 - [ ] GraphQL API support
 

@@ -167,5 +167,25 @@ Dockerfile
 *.orig
 *.rej
 
+# Frontend (Next.js/React/Node.js)
+# -------------------------------
+frontend/node_modules/
+frontend/.next/
+
+# Frontend dependencies
+frontend/package-lock.json
+frontend/yarn.lock
+frontend/pnpm-lock.yaml
+
+# Frontend generated files
+frontend/generated/
+frontend/src/generated/
+frontend/.openapi-generator/
+frontend/openapitools.json
+
+# Frontend IDE
+frontend/.vscode/
+frontend/.idea/
+
 # End of .gitignore
 

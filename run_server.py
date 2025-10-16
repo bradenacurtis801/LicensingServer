@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 # Add the project root to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-RELOAD_EXCLUDES = ["venv", ".git", "__pycache__", "scripts", "client_sdk"]
+RELOAD_EXCLUDES = ["venv", ".git", "__pycache__", "scripts", "client_sdk", "frontend"]
 
 if __name__ == "__main__":
     logger.info("Starting License Management Server")

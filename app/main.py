@@ -7,10 +7,15 @@ from contextlib import asynccontextmanager
 from typing import List
 import logging.config
 
+import app.config as config
 from app.config import settings
 from app.database.connection import create_db_and_tables
 from app.database.postgres import wait_for_postgres_ready, init_postgres_schema, check_postgres_connection
 from app.api.v1.api import api_router
+from app.graphql.schema import schema
+from app.graphql.context import get_graphql_context
+from strawberry.fastapi import GraphQLRouter
+from strawberry.asgi import GraphQL
 from app.core.exceptions import LicenseManagementException, map_to_http_exception
 from app.core.constants import ensure_directories, LOGGING_CONFIG
 from app.scripts.db_management import start_app_managed_postgres, stop_app_managed_postgres
@@ -66,14 +71,50 @@ app = FastAPI(
     ]
 )
 
+cors_origins = settings.cors_origins
+
+# In development, allow all origins for easier debugging
+if config.is_development:
+    cors_origins = ["*"]  # Allow all origins in development
+
 # Add security schemes to OpenAPI
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add debug middleware to log all requests
+@app.middleware("http")
+async def debug_middleware(request: Request, call_next):
+    print(f"🔍 DEBUG: Incoming request: {request.method} {request.url}")
+    print(f"🔍 DEBUG: Headers: {dict(request.headers)}")
+    
+    # Highlight preflight requests
+    if request.method == "OPTIONS":
+        print("🚨 PREFLIGHT REQUEST DETECTED!")
+        print(f"🚨 Origin: {request.headers.get('origin')}")
+        print(f"🚨 Access-Control-Request-Method: {request.headers.get('access-control-request-method')}")
+        print(f"🚨 Access-Control-Request-Headers: {request.headers.get('access-control-request-headers')}")
+    
+    # Highlight requests with Authorization header
+    auth_header = request.headers.get('authorization') or request.headers.get('Authorization')
+    if auth_header:
+        print(f"🔑 AUTHORIZATION HEADER FOUND: {auth_header}")
+    else:
+        print("❌ NO AUTHORIZATION HEADER")
+    
+    response = await call_next(request)
+    print(f"🔍 DEBUG: Response status: {response.status_code}")
+    
+    # Log CORS response headers
+    cors_headers = {k: v for k, v in response.headers.items() if k.lower().startswith('access-control')}
+    if cors_headers:
+        print(f"🌐 CORS Response headers: {cors_headers}")
+    
+    return response
 
 # Configure OpenAPI security schemes
 # def custom_openapi():
@@ -119,6 +160,13 @@ async def license_exception_handler(request: Request, exc: LicenseManagementExce
 # Include API routes
 app.include_router(api_router, prefix=settings.api_v1_prefix)
 
+# Add GraphQL endpoint
+graphql_app = GraphQLRouter(schema, context_getter=get_graphql_context)
+app.include_router(graphql_app, prefix="/graphql")
+
+app.add_route("/graphql-playground", GraphQL(schema))
+
+
 # Health check endpoint
 @app.get("/health")
 async def health_check():
@@ -136,6 +184,27 @@ async def health_check():
         "database": db_status
     }
 
+# Debug endpoint for OPTIONS requests
+@app.options("/{path:path}")
+async def debug_options(path: str, request: Request):
+    """Debug endpoint to handle OPTIONS requests"""
+    print(f"🚨 OPTIONS request to: /{path}")
+    print(f"🚨 Origin: {request.headers.get('origin')}")
+    print(f"🚨 Access-Control-Request-Method: {request.headers.get('access-control-request-method')}")
+    print(f"🚨 Access-Control-Request-Headers: {request.headers.get('access-control-request-headers')}")
+    
+    # Return a proper CORS response
+    from fastapi.responses import Response
+    return Response(
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": request.headers.get('origin', '*'),
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+            "Access-Control-Allow-Credentials": "true",
+        }
+    )
+
 # Root endpoint
 @app.get("/")
 async def root():
@@ -148,9 +217,12 @@ async def root():
     }
 if __name__ == "__main__":
     import uvicorn
+
+    host = settings.backend_host if config.is_production else "0.0.0.0"
+
     uvicorn.run(
         "app.main:app",
-        host="0.0.0.0",
+        host=host,
         port=settings.backend_port,
         reload=settings.debug
     )

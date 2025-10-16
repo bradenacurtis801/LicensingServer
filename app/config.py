@@ -6,11 +6,14 @@ import logging
 from pydantic import Field, model_validator
 from urllib.parse import quote_plus
 from pathlib import Path
+from typing import Literal
 
 # Set up logger
 logger = logging.getLogger(__name__)
 
 class Settings(BaseSettings):
+    node_env: Literal["dev", "prod", "development", "production"] = Field(default="dev")
+
     # Database
     database_url: str = Field(
         default="",
@@ -108,6 +111,16 @@ class Settings(BaseSettings):
         default=3600,
         description="Rate limit window in seconds"
     )
+
+    @property
+    def node_env_value(self) -> str:
+        """Map NODE_ENV environment variable to internal values."""
+        import os
+
+        env_value = os.getenv("NODE_ENV", "development")
+        if env_value in ["production", "prod"]:
+            return "prod"
+        return "dev"
     
     @model_validator(mode='after')
     def construct_database_url(self):
@@ -153,3 +166,6 @@ class Settings(BaseSettings):
 
 # Create global settings instance
 settings = Settings()
+
+is_development = settings.node_env_value == "dev"
+is_production = settings.node_env_value == "prod"
