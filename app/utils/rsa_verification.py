@@ -37,7 +37,7 @@ class RSAVerifier:
                 backend=default_backend()
             )
             
-            # Create data string to verify (similar to Cryptolens)
+            # Create data string to verify
             data_str = json.dumps(data, sort_keys=True, separators=(',', ':'))
             data_hash = hashlib.sha256(data_str.encode()).digest()
             
@@ -110,7 +110,7 @@ class RSAVerifier:
     @staticmethod
     def create_signature_with_secret(license_key_b64: str, secret: str) -> str:
         """
-        Create RSA signature for Base64-encoded license key (Cryptolens-style)
+        Create RSA signature for Base64-encoded license key
         
         Args:
             license_key_b64: The Base64-encoded license key to sign
@@ -134,7 +134,7 @@ class RSAVerifier:
                 backend=default_backend()
             )
             
-            # Sign the Base64 license key string (like Cryptolens does)
+            # Sign the Base64 license key string
             license_key_bytes = license_key_b64.encode()
             signature = private_key.sign(
                 license_key_bytes,
@@ -148,44 +148,6 @@ class RSAVerifier:
         except Exception as e:
             logger.error(f"RSA signature creation with secret failed: {e}")
             return ""
-    
-    @staticmethod
-    def verify_signature_cryptolens_style(license_key_b64: str, signature: str, public_key_str: str) -> bool:
-        """
-        Verify RSA signature of Base64-encoded license key (Cryptolens-style)
-        
-        Args:
-            license_key_b64: The Base64-encoded license key to verify
-            signature: Base64 encoded signature
-            public_key_str: PEM formatted public key
-            
-        Returns:
-            True if signature is valid, False otherwise
-        """
-        try:
-            # Load public key
-            public_key = serialization.load_pem_public_key(
-                public_key_str.encode(),
-                backend=default_backend()
-            )
-            
-            # Decode signature
-            signature_bytes = base64.b64decode(signature)
-            
-            # Verify signature of Base64 license key (like Cryptolens)
-            license_key_bytes = license_key_b64.encode()
-            public_key.verify(
-                signature_bytes,
-                license_key_bytes,
-                padding.PKCS1v15(),
-                hashes.SHA256()
-            )
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Signature verification failed: {e}")
-            return False
     
     @staticmethod
     def create_signature(data: Dict[str, Any], private_key_str: str) -> str:
